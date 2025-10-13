@@ -30,9 +30,35 @@ void Tile::setValue(const unsigned char representation) {
 }
 
 TileType Tile::getTileType() const {
+    using enum TileType;
     return
        (value == '-') ? EMPTY :
        (value == 'X') ? X :
        (value == 'T') ? T :
-       C;
+        C;
+}
+
+bool Tile::isOpenFrom(const Direction direction) const {
+    return value == '-' || (value != 'X' && value != 'T' && value & direction);
+}
+
+std::unordered_set<Direction> Tile::getOpenFrom() const {
+    switch (getTileType()) {
+        using enum TileType;
+        case EMPTY: return std::unordered_set{
+            TOP,
+            BOTTOM,
+            LEFT,
+            RIGHT,
+        };
+        case T: return {};
+        case X: return {};
+        case C:
+            auto directions = std::unordered_set<Direction>();
+            if (value & RIGHT) directions.insert( RIGHT);
+            if (value & TOP) directions.insert(TOP);
+            if (value & LEFT) directions.insert(LEFT);
+            if (value & BOTTOM) directions.insert(BOTTOM);
+            return directions;
+    }
 }

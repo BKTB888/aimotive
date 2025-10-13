@@ -7,17 +7,24 @@
 
 #include <vector>
 #include <format>
+#include <functional>
+#include <list>
+#include <set>
 #include <memory>
+
 #include "Tile.h"
 
+using Coordinate = std::pair<uint16_t, uint16_t>;
 
 class Field {
     std::vector<std::vector<Tile>> field;
-    std::pair<uint16_t, uint16_t> start;
-    std::vector<std::pair<uint16_t, uint16_t>> Cs;
+    Coordinate start;
+    std::set<Coordinate> Cs;
 
     void initializeRest();
+    [[nodiscard]] std::vector<Coordinate> getConnectedCoordinates(const Coordinate &coord) const;
 public:
+    Field() = default;
     explicit Field(std::string_view field_str);
     friend std::ostream& operator<<(std::ostream& os, const Field& f) {
         for (const auto& row : f.field) {
@@ -29,34 +36,43 @@ public:
         return os;
     }
 
-    friend std::istream& operator>>(std::istream& is, Field& f) {
-        unsigned N, M;
-        is >> N >> M;
-        //ignore a new line character
-        is.ignore();
-        f.field.resize(N);
+    [[nodiscard]] const Coordinate& getStart() const;
+    [[nodiscard]] const std::set<Coordinate>& getCs() const;
 
-        auto i = 0;
-        for (std::string line; i < N && std::getline(is, line); ++i) {
-            if (const auto line_size = line.length(); line_size != M)
-                throw std::invalid_argument(
-                    std::format("Expected M = {} got {} in line: {}.{}!", M, line_size, i, line)
+    [[nodiscard]] size_t countPathToCs(
+        const std::function<std::pair<size_t, Coordinate>(
+            std::list<std::pair<int, Coordinate>> coords
+            )>& node_selector) const;
+
+    friend std::istream& operator>>(std::istream& is, Field& f) {
+        using namespace std;
+        unsigned N, M;
+        if (is >> N >> M) {
+            //ignore a new line character
+            is.ignore();
+            f.field.resize(N);
+
+            auto i = 0;
+            for (string line; i < N && getline(is, line); ++i) {
+                if (const auto line_size = line.length(); line_size != M)
+                    throw invalid_argument(
+                        format("Expected M = {} got {} in line: {}.{}!", M, line_size, i, line)
+                    );
+
+                auto& tiles = f.field[i];
+                tiles.resize(M);
+                for (auto j = 0; j < M; ++j) {
+                    tiles[j].setValue(line[j]);
+                }
+            }
+
+            if (i < N)
+                throw invalid_argument(
+                    format("Expected N = {} got {}!", N, i)
                 );
 
-            auto& tiles = f.field[i];
-            tiles.resize(M);
-            for (auto j = 0; j < M; ++j) {
-                const auto new_tile = Tile(line[j]);
-                tiles[j] = new_tile;
-            }
+            f.initializeRest();
         }
-
-        if (i < N)
-            throw std::invalid_argument(
-                std::format("Expected N = {} got {}!", N, i)
-            );
-
-        f.initializeRest();
         return is;
     }
 };

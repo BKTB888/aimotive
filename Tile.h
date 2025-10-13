@@ -5,13 +5,24 @@
 #ifndef AIMOTIVE_TILE_H
 #define AIMOTIVE_TILE_H
 #include <iostream>
+#include <unordered_set>
+#include <vector>
 
-enum TileType {
+enum class TileType {
     EMPTY,
     T,
     X,
     C
 };
+
+enum Direction {
+    RIGHT = 0x1,
+    TOP = 0x2,
+    LEFT = 0x4,
+    BOTTOM = 0x8
+};
+
+
 
 class Tile {
     unsigned char value;
@@ -23,12 +34,15 @@ public:
     Tile() = default;
     explicit Tile(char representation);
 
+    void setValue(unsigned char representation);
+    [[nodiscard]] TileType getTileType() const;
+
+    [[nodiscard]] bool isOpenFrom(Direction direction) const;
+    [[nodiscard]] std::unordered_set<Direction> getOpenFrom() const;
+
     friend std::ostream& operator<<(std::ostream& os, const Tile& t) {
         return os << t.toChar();
     }
-
-    void setValue(unsigned char representation);
-    [[nodiscard]] TileType getTileType() const;
 
     friend std::istream& operator>>(std::istream& is, Tile& t) {
         unsigned char representation;
