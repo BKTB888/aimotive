@@ -37,7 +37,7 @@ int main() {
 
     while (is >> field) {
         //cout << field << endl;
-        cout << field.countPathToCs(a_start_select) << endl;
+        cout << field.countPathToCs(bfs_node_select) << endl;
     }
 
     return 0;
