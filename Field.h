@@ -15,6 +15,7 @@
 #include "Tile.h"
 
 using Coordinate = std::pair<uint16_t, uint16_t>;
+using NodeSelector = std::function<std::pair<size_t, Coordinate>(std::list<std::pair<int, Coordinate>> coords)>;
 
 class Field {
     std::vector<std::vector<Tile>> field;
@@ -39,10 +40,8 @@ public:
     [[nodiscard]] const Coordinate& getStart() const;
     [[nodiscard]] const std::set<Coordinate>& getCs() const;
 
-    [[nodiscard]] size_t countPathToCs(
-        const std::function<std::pair<size_t, Coordinate>(
-            std::list<std::pair<int, Coordinate>> coords
-            )>& node_selector) const;
+    [[nodiscard]] size_t countPathToCs(const NodeSelector& node_selector) const;
+    void countPathToCsDebug(const NodeSelector& node_selector) const;
 
     friend std::istream& operator>>(std::istream& is, Field& f) {
         using namespace std;

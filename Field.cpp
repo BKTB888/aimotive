@@ -9,7 +9,6 @@
 #include <ranges>
 #include <numeric>
 
-
 using namespace std;
 
 
@@ -95,7 +94,7 @@ static void print_set(const std::set<std::pair<size_t, Coordinate>>& s) {
     std::cout << "}\n";
 }
 
-size_t Field::countPathToCs(const function<pair<size_t, Coordinate>(list<pair<int, Coordinate>>)>& node_selector) const {
+size_t Field::countPathToCs(const NodeSelector& node_selector) const {
     auto current = make_pair(-1, start);
     auto discovered_coords = set{start};
     auto open = list{current};
@@ -106,6 +105,7 @@ size_t Field::countPathToCs(const function<pair<size_t, Coordinate>(list<pair<in
         const auto distance = current.first;
         const auto current_coord = current.second;
         const auto connected_coords = getConnectedCoordinates(current_coord);
+
         for (const auto& connected_coord: connected_coords) {
             const auto new_distance = distance + 1;
             if (!discovered_coords.contains(connected_coord)) {
@@ -121,9 +121,66 @@ size_t Field::countPathToCs(const function<pair<size_t, Coordinate>(list<pair<in
         const auto next = node_selector(open);
         current = next;
     }
-    //For debuging
-    //print_set(found_cs);
     return ranges::fold_left(found_cs, 0, [](const auto acc, const auto& c) {
         return acc + c.first;
     });
+}
+
+void Field::countPathToCsDebug(const NodeSelector &node_selector) const {
+    auto current = make_pair(vector<Coordinate>(), start);
+    auto discovered_coords = set{start};
+    auto open = list{
+        current
+    };
+    auto found_cs = set<pair<vector<Coordinate>, Coordinate>>();
+
+    auto i = 0;
+    while (found_cs.size() != Cs.size() && !open.empty()) {
+        ++i;
+        const auto new_distance = current.first.size() + 1;
+        const auto current_coord = current.second;
+        open.remove(current);
+        const auto connected_coords = getConnectedCoordinates(current_coord);
+
+        for (const auto& connected_coord: connected_coords) {
+            if (!discovered_coords.contains(connected_coord)) {
+                auto new_route = current.first;
+                new_route.push_back(current_coord);
+                discovered_coords.insert(connected_coord);
+
+                const auto connected = make_pair(new_route, connected_coord);
+                if (Cs.contains(connected_coord)) {
+                    found_cs.insert(connected);
+                } else {
+                    open.push_back(connected);
+                }
+            }
+        }
+        const auto converted = open | views::transform([] (const auto& path_and_coord) {
+            const auto [path, coord] = path_and_coord;
+            return make_pair(static_cast<int>(path.size()), coord);
+        }) | ranges::to<list>();
+        const auto next_coord = node_selector(converted).second;
+        current = *ranges::find_if(open, [&next_coord](const auto& path_and_coord) {
+            const auto coord = path_and_coord.second;
+            return coord == next_coord;
+        });
+    }
+
+    cout << "Visited nodes: " << i << endl;
+
+    const auto all_paths = found_cs | views::transform([](const auto& path_and_coord) {
+        return path_and_coord.first;
+    }) | views::join | ranges::to<vector>();
+    const auto all_paths_set = set(all_paths.begin(), all_paths.end());
+    for (auto i = 0; i < field.size(); ++i) {
+        for (auto j = 0; j < field[0].size(); ++j) {
+            const auto wasVisited = all_paths_set.contains(make_pair(i, j));
+            if (wasVisited) {cout << "\033[31m";}
+            cout << field[i][j];
+            if (wasVisited) {cout << "\033[0m";}
+        }
+        cout << endl;
+    }
+    cout << "Result:" << all_paths.size() << endl;
 }
