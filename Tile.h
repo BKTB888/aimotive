@@ -6,7 +6,6 @@
 #define AIMOTIVE_TILE_H
 #include <iostream>
 #include <unordered_set>
-#include <vector>
 
 enum class TileType {
     EMPTY,
@@ -21,6 +20,8 @@ enum Direction {
     LEFT = 0x4,
     BOTTOM = 0x8
 };
+
+Direction oppositeOf(Direction direction);
 
 
 

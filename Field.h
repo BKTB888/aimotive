@@ -9,12 +9,14 @@
 #include <format>
 #include <functional>
 #include <list>
+#include <map>
 #include <set>
 #include <memory>
 
 #include "Tile.h"
 
 using Coordinate = std::pair<uint16_t, uint16_t>;
+using NodeSelector = std::function<std::pair<Coordinate, size_t>(const std::list<std::pair<Coordinate, int>>&, const std::map<Coordinate, size_t>&)>;
 
 class Field {
     std::vector<std::vector<Tile>> field;
@@ -22,7 +24,6 @@ class Field {
     std::set<Coordinate> Cs;
 
     void initializeRest();
-    [[nodiscard]] std::vector<Coordinate> getConnectedCoordinates(const Coordinate &coord) const;
 public:
     Field() = default;
     explicit Field(std::string_view field_str);
@@ -38,16 +39,14 @@ public:
 
     [[nodiscard]] const Coordinate& getStart() const;
     [[nodiscard]] const std::set<Coordinate>& getCs() const;
+    [[nodiscard]] std::vector<Coordinate> getConnectedCoordinates(const Coordinate &coord) const;
 
-    [[nodiscard]] size_t countPathToCs(
-        const std::function<std::pair<size_t, Coordinate>(
-            std::list<std::pair<int, Coordinate>> coords
-            )>& node_selector) const;
+    [[nodiscard]] size_t countPathToCs(const NodeSelector& node_selector) const;
+    void countPathToCsDebug(const NodeSelector& node_selector) const;
 
     friend std::istream& operator>>(std::istream& is, Field& f) {
         using namespace std;
-        unsigned N, M;
-        if (is >> N >> M) {
+        if (unsigned N, M; is >> N >> M) {
             //ignore a new line character
             is.ignore();
             f.field.resize(N);
