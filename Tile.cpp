@@ -4,6 +4,19 @@
 
 #include "Tile.h"
 
+#include <cmath>
+
+constexpr auto allDirections = std::array{
+    RIGHT,
+    TOP,
+    LEFT,
+    BOTTOM
+};
+
+Direction oppositeOf(const Direction direction) {
+    return allDirections[abs((std::bit_width(static_cast<unsigned>(direction)) - 3) % 4)];
+}
+
 bool Tile::isHelperLetter(const unsigned char c) {
     return c == '-' || c == 'X' || c == 'T';
 }
@@ -39,26 +52,20 @@ TileType Tile::getTileType() const {
 }
 
 bool Tile::isOpenFrom(const Direction direction) const {
-    return value == '-' || (value != 'X' && value != 'T' && value & direction);
+    return value == '-' || (value != 'X' && (value == 'T' || value & direction));
 }
 
 std::unordered_set<Direction> Tile::getOpenFrom() const {
     switch (getTileType()) {
         using enum TileType;
-        case EMPTY: return std::unordered_set{
-            TOP,
-            BOTTOM,
-            LEFT,
-            RIGHT,
-        };
-        case T: return {};
+        case EMPTY: return std::unordered_set(allDirections.begin(), allDirections.end());
+        case T: [[fallthrough]];
         case X: return {};
         case C:
             auto directions = std::unordered_set<Direction>();
-            if (value & RIGHT) directions.insert( RIGHT);
-            if (value & TOP) directions.insert(TOP);
-            if (value & LEFT) directions.insert(LEFT);
-            if (value & BOTTOM) directions.insert(BOTTOM);
+            for (const auto direction: allDirections) {
+                if (value & direction) directions.insert( direction);
+            }
             return directions;
     }
 }
