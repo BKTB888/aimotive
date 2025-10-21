@@ -15,7 +15,7 @@ int main() {
     //Field and node_selectors
     auto field = Field();
 
-    constexpr auto bfs_node_select = [] (const auto& open_set) {
+    constexpr auto bfs_node_select = [] (const auto& open_set, const auto&) {
         const auto it = open_set.begin();
         return *it;
     };
@@ -27,7 +27,7 @@ int main() {
         });
         return min_it->first;
     };
-    const auto a_start_select = [&heuristic] (const auto& open_set) {
+    const auto a_star_select = [&heuristic] (const auto& open_set) {
         return *ranges::min_element(open_set,{}, [&heuristic] (const auto& tile) {
             return heuristic(tile.second) + tile.first;
         });
